@@ -1,14 +1,22 @@
 package com.thomaskuenneth.locationdemo2;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -26,6 +34,9 @@ public class LocationDemo2Activity extends FragmentActivity implements OnMapRead
 
     private GoogleMap mMap;
 
+    Button addFeature;
+    Context context = this;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,7 +44,19 @@ public class LocationDemo2Activity extends FragmentActivity implements OnMapRead
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
+        ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
+        params.height = (getResources().getDisplayMetrics().heightPixels)*8/10;
+        mapFragment.getView().setLayoutParams(params);
         mapFragment.getMapAsync(this);
+        addFeature = findViewById(R.id.addFeature);
+        addFeature.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent addMarker = new Intent(context, AddMarker.class);
+                startActivity(addMarker);
+            }
+        });
     }
 
     @Override
