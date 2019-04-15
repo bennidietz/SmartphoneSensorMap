@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/account"
+        android:icon="@drawable/welt"
+        android:title="My Account"/>
+    <item android:id="@+id/settings"
+        android:icon="@drawable/mobile_phone"
+        android:title="Settings"/>
+    <item android:id="@+id/mycart"
+        android:icon="@drawable/common_google_signin_btn_text_dark"
+        android:title="My Cart"/>
+
+</menu>

@@ -51,7 +51,7 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
     Marker marker;
     SupportMapFragment mapFragment;
 
-    String[] kategorien = new String[]{"Mode", "Dekoration/ Einrichtung", "Kunst", "Kulinarisches"};
+    public static String[] kategorien = new String[]{"Mode", "Dekoration/ Einrichtung", "Kunst", "Kulinarisches"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -220,5 +220,14 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
             }
         });
         builder.show();
+    }
+
+    public static String[] getKategorienPlusBeschreibung() {
+        String[] temp = new String[kategorien.length + 1];
+        temp[0] = "Kategorien auswählen";
+        for (int i = 0; i < kategorien.length; i++) {
+            temp[i+1] = kategorien[i];
+        }
+        return temp;
     }
 }

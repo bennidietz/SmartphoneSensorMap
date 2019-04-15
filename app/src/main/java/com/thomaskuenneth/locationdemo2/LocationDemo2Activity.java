@@ -3,22 +3,22 @@ package com.thomaskuenneth.locationdemo2;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.design.widget.NavigationView;
 import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LocationDemo2Activity extends FragmentActivity implements OnMapReadyCallback {
+public class LocationDemo2Activity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final int PERMISSIONS_ACCESS_FINE_LOCATION
             = 0x1234;
@@ -47,6 +47,14 @@ public class LocationDemo2Activity extends FragmentActivity implements OnMapRead
     HashMap<Marker, String> markers;
     Button gotoFeature;
     String currentidentifier = "";
+
+    // navigation bars
+    private DrawerLayout dl;
+    private ActionBarDrawerToggle t;
+    private NavigationView nv;
+
+    Button aktualisieren;
+    ArrayList<StateVO> kategorienChecked;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +79,82 @@ public class LocationDemo2Activity extends FragmentActivity implements OnMapRead
         //params.height = (getResources().getDisplayMetrics().heightPixels)*8/10;
         //mapFragment.getView().setLayoutParams(params);
         mapFragment.getMapAsync(this);
+
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        dl = (DrawerLayout)findViewById(R.id.activity_main);
+        t = new ActionBarDrawerToggle(this, dl,R.string.Open, R.string.Close);
+
+        dl.addDrawerListener(t);
+        t.syncState();
+
+        nv = (NavigationView)findViewById(R.id.nv);
+        View headerView = nv.getHeaderView(0);
+        nv.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int id = item.getItemId();
+                switch(id)
+                {
+                    case R.id.account:
+                        Toast.makeText(context, "My Account",Toast.LENGTH_SHORT).show();
+                    case R.id.settings:
+                        Toast.makeText(context, "Settings",Toast.LENGTH_SHORT).show();
+                    case R.id.mycart:
+                        Toast.makeText(context, "My Cart",Toast.LENGTH_SHORT).show();
+                    default:
+                        return true;
+                }
+            }
+        });
+        //TextView navUsername = (TextView) headerView.findViewById(R.id.navUsername); => get view from navigation_menu.xml (items)
+        //View headerLayout = nv.inflateHeaderView(R.layout.nav_header); // get views from nav_header.xml
+        final Spinner klasse = headerView.findViewById(R.id.klasse);
+        kategorienChecked = new ArrayList<>();
+        for (int i = 0; i < AddMarker.getKategorienPlusBeschreibung().length; i++) {
+            StateVO stateVO = new StateVO();
+            stateVO.setTitle(AddMarker.getKategorienPlusBeschreibung()[i]);
+            stateVO.setSelected(false);
+            kategorienChecked.add(stateVO);
+        }
+        MyAdapter myAdapter = new MyAdapter(context, 0,
+                kategorienChecked);
+        klasse.setAdapter(myAdapter);
+
+        aktualisieren = headerView.findViewById(R.id.aktualisieren);
+        aktualisieren.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ArrayList<Marker> markerstoremove = new ArrayList<>();
+                HashMap<Marker, String> markerstoadd = new HashMap<>();
+                for (Marker marker: markers.keySet()) {
+                    marker.remove();
+                    for (StateVO kategorie: kategorienChecked) {
+                        if (kategorie.isSelected() && marker.getSnippet().equals(kategorie.getTitle())) {
+                            MarkerOptions options = new MarkerOptions();
+                            options.position(marker.getPosition()).title(marker.getTitle()).snippet(marker.getSnippet());
+                            //options.icon(BitmapDescriptorFactory.defaultMarker(
+                            //      BitmapDescriptorFactory.HUE_RED));
+                            options.icon(BitmapDescriptorFactory.defaultMarker(getColorForClass(marker.getSnippet())));
+                            String identifier = markers.get(marker);
+                            markerstoremove.add(marker);
+                            //markers.remove(marker);
+                            markerstoadd.put(mMap.addMarker(options), identifier);
+                            //markers.put(mMap.addMarker(options), identifier);
+
+                        }
+                    }
+                }
+                for (Marker marker: markerstoremove) {
+                    markers.remove(marker);
+                }
+                for (Marker marker: markerstoadd.keySet()) {
+                    markers.put(marker, markerstoadd.get(marker));
+                }
+            }
+        });
+
     }
 
     @Override
@@ -82,6 +166,18 @@ public class LocationDemo2Activity extends FragmentActivity implements OnMapRead
                         PackageManager.PERMISSION_GRANTED)) {
             markerDemo();
         }
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(t.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -185,8 +281,28 @@ public class LocationDemo2Activity extends FragmentActivity implements OnMapRead
         options.position(latLng).title(name).snippet(klasse);
         //options.icon(BitmapDescriptorFactory.defaultMarker(
         //      BitmapDescriptorFactory.HUE_RED));
-        options.icon(BitmapDescriptorFactory.defaultMarker());
+        options.icon(BitmapDescriptorFactory.defaultMarker(getColorForClass(klasse)));
         return options;
+    }
+
+    private float getColorForClass(String klasse) {
+        String[] kategorien = AddMarker.kategorien;
+        if (klasse.equals(kategorien[0])) {
+            // Mode
+            return BitmapDescriptorFactory.HUE_GREEN;
+        } else if (klasse.equals(kategorien[1])) {
+            // Dekroation/ Einrichtung
+            return BitmapDescriptorFactory.HUE_AZURE;
+        } else if (klasse.equals(kategorien[2])) {
+            // Kunst
+            return BitmapDescriptorFactory.HUE_RED;
+        } else if (klasse.equals(kategorien[3])) {
+            // Kulinarisches
+            return BitmapDescriptorFactory.HUE_YELLOW;
+        } else {
+            // andere
+            return BitmapDescriptorFactory.HUE_BLUE;
+        }
     }
 
     public void addMarker(MarkerOptions newMarkerOptions, String identifier) {
