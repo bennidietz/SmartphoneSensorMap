@@ -6,4 +6,5 @@
     <string name="title_activity_show_feature">ShowFeature</string>
     <string name="Open">Öffnen</string>
     <string name="Close">Schließen</string>
+    <string name="descr">Bild für Feature</string>
 </resources>

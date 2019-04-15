@@ -5,11 +5,14 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.camera2.CameraAccessException;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -22,6 +25,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,11 +40,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
-public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
+public class AddMarker extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener {
 
 
+    private static final int CAMERA_REQUEST_CODE = 234;
     EditText name;
     Spinner klasse;
     Button ok;
@@ -50,6 +56,10 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
             = 0x1234;
     Marker marker;
     SupportMapFragment mapFragment;
+    Camera_Helper camera_helper;
+    ArrayList<String> bilderaufgenommen;
+    TextView anzahl_bilder;
+    ImageButton camera;
 
     public static String[] kategorien = new String[]{"Mode", "Dekoration/ Einrichtung", "Kunst", "Kulinarisches"};
 
@@ -63,14 +73,21 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE}, CAMERA_REQUEST_CODE);
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-
+        camera_helper = new Camera_Helper(this);
+        bilderaufgenommen = new ArrayList<String>();
+        anzahl_bilder = findViewById(R.id.anzahl_bilder);
         ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
         params.height = (getResources().getDisplayMetrics().heightPixels)*6/10;
         mapFragment.getView().setLayoutParams(params);
         mapFragment.getMapAsync(this);
         klasse = findViewById(R.id.klasse);
+        camera = (ImageButton) findViewById(R.id.camera);
+        camera.setOnClickListener(this);
         ArrayAdapter<String> adapter_kategorien = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, kategorien);
         klasse.setAdapter(adapter_kategorien);
         klasse.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -117,6 +134,9 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
                 hashMap.put(DBHandler.TABLE1_C1, name.getText().toString());
                 hashMap.put(DBHandler.OVERALL_LATITUDE, marker.getPosition().latitude + "");
                 hashMap.put(DBHandler.OVERALL_LONGITUDE, marker.getPosition().longitude + "");
+                if (bilderaufgenommen.size() > 0) {
+                    hashMap.put(DBHandler.OVERALL_PICTURE, Camera_Helper.getPictureIncludedString(bilderaufgenommen));
+                }
                 dbHandler.addRecord(hashMap, DBHandler.table1_keys);
                 ((Activity)context).finish();
             }
@@ -128,6 +148,15 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
     protected void onResume() {
         super.onResume();
         mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (camera_helper.onActivityResult(requestCode, resultCode, data) != null) {
+            String bild = camera_helper.onActivityResult(requestCode, resultCode, data);
+            bilderaufgenommen.add(bild);
+            anzahl_bilder.setText(bilderaufgenommen.size() + "");
+        }
     }
 
     @Override
@@ -229,5 +258,18 @@ public class AddMarker extends AppCompatActivity implements OnMapReadyCallback {
             temp[i+1] = kategorien[i];
         }
         return temp;
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            //https://android.jlelse.eu/the-least-you-can-do-with-camera2-api-2971c8c81b8b
+            case R.id.camera:
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    camera_helper.initializeCamera();
+                }
+                break;
+        }
     }
 }

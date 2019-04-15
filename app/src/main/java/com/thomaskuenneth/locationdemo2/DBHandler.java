@@ -29,16 +29,18 @@ public class DBHandler extends SQLiteOpenHelper {
     static final String OVERALL_LATITUDE = "latitude";
     static final String OVERALL_LONGITUDE  = "longitude";
 
+    static final String OVERALL_PICTURE= "bilder";
+
     // Contacts table name
     public static final String TABLE_1 = "marker";
     public static final String TABLE1_C1  = "name";
     public static String[] table1_keys = {TABLE_1, OVERALL_IDENTIFIER, OVERALL_CLASS, OVERALL_LATITUDE, OVERALL_LONGITUDE,
-            TABLE1_C1 };
+            TABLE1_C1, OVERALL_PICTURE };
     static String CREATE_CONTACTS_TABLE1 = String.format("CREATE TABLE if not exists %s(%s INTEGER PRIMARY KEY AUTOINCREMENT, %s TEXT,%s TEXT,%s TEXT," +
-                    "%s TEXT) ",
+                    "%s TEXT, %s TEXT) ",
 
             TABLE_1, OVERALL_IDENTIFIER, OVERALL_CLASS, OVERALL_LATITUDE, OVERALL_LONGITUDE,
-            TABLE1_C1);
+            TABLE1_C1, OVERALL_PICTURE);
 
 
     public static final String TABLE_2 = "GDP";
