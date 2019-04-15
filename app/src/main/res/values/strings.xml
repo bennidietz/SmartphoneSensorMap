@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">LocationDemo2</string>
     <string name="title_activity_location_demo2">Map</string>
-    <string name="title_activity_add_marker">AddMarker</string>
+    <string name="title_activity_add_marker">Feature hinzufügen</string>
+    <string name="title_activity_hauptmenue">Hauptmenü</string>
+    <string name="title_activity_show_feature">ShowFeature</string>
 </resources>

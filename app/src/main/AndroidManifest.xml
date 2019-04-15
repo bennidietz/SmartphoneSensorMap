@@ -16,9 +16,23 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".ShowFeature"
+            android:label="@string/title_activity_show_feature"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Hauptmenue"
+            android:label="@string/title_activity_hauptmenue"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".AddMarker"
             android:label="@string/title_activity_add_marker"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -33,13 +47,7 @@
 
         <activity
             android:name=".LocationDemo2Activity"
-            android:label="@string/title_activity_location_demo2">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:label="@string/title_activity_location_demo2"></activity>
     </application>
 
 </manifest>
