@@ -10,36 +10,51 @@
     tools:context=".ShowFeature"
     tools:showIn="@layout/activity_show_feature">
 
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_margin="10dp"
-        android:layout_height="200dp">
+        android:layout_height="wrap_content">
 
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|right">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:id="@+id/linLayout"
+            android:orientation="vertical"
+            android:layout_height="wrap_content">
 
-            <Button
-                android:id="@+id/route"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_gravity="center_horizontal"
+
+            <fragment
+                android:id="@+id/map"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
                 android:layout_margin="10dp"
-                android:backgroundTint="@color/gelb"
-                android:paddingLeft="20dp"
-                android:paddingTop="10dp"
-                android:paddingRight="20dp"
-                android:paddingBottom="10dp"
-                android:text="Route\nstarten"
-                android:textAlignment="center"
-                android:textAllCaps="false"
-                android:textSize="14sp" />
-        </FrameLayout>
+                android:layout_height="200dp">
 
-    </fragment>
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|right">
+
+                    <Button
+                        android:id="@+id/route"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_margin="10dp"
+                        android:backgroundTint="@color/gelb"
+                        android:paddingLeft="20dp"
+                        android:paddingTop="10dp"
+                        android:paddingRight="20dp"
+                        android:paddingBottom="10dp"
+                        android:text="Route\nstarten"
+                        android:textAlignment="center"
+                        android:textAllCaps="false"
+                        android:textSize="14sp" />
+                </FrameLayout>
+
+            </fragment>
+
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

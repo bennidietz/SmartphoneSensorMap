@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -16,6 +18,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -28,6 +32,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -41,6 +46,7 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
     private static final int PERMISSIONS_ACCESS_FINE_LOCATION
             = 0x1234;
     Button route;
+    LinearLayout linLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +59,7 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
+        linLayout = findViewById(R.id.linLayout);
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
@@ -86,6 +93,19 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
         if (feature != null) {
             getSupportActionBar().setTitle(feature.get(DBHandler.TABLE1_C1));
             getSupportActionBar().setSubtitle(feature.get(DBHandler.OVERALL_CLASS));
+            File imgFile = new  File(getExternalCacheDir(), feature.get(DBHandler.OVERALL_PICTURE));
+
+            if(imgFile.exists()){
+
+                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+
+                ImageView myImage = new ImageView(this);
+
+                myImage.setImageBitmap(myBitmap);
+
+                linLayout.addView(myImage);
+
+            }
         } else {
             Toast.makeText(context, "Der Datensatz konnte nicht gefunden werden", Toast.LENGTH_LONG);
             this.finish();

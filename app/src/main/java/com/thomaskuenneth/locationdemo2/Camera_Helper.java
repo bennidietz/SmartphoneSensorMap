@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class Camera_Helper {
@@ -62,7 +63,7 @@ public class Camera_Helper {
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build()); // auch gut für GLS Check APP
         cameraintent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        File file = getFile(context.getFilesDir().getAbsolutePath(), datepic); //Pfad, in dem Bild gepeichert wird
+        File file = getFile(context.getExternalCacheDir().getAbsolutePath(), datepic); //Pfad, in dem Bild gepeichert wird
         cameraintent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
         ((Activity) context).startActivityForResult(cameraintent, CAM_REQUEST);
     }
@@ -113,7 +114,7 @@ public class Camera_Helper {
                     //datepic = sdf.format(calendar.getTime());
                     //datepic = datepic.replace(":", "");
                     //datepic = wknummer + "_" + datepic + ".jpg"; //Dateiname festgelegt
-                    File filename = getFile(context.getFilesDir().getAbsolutePath(), datepic); //kompletter Pfad, wo Bild gespeichert werden soll
+                    File filename = getFile(context.getExternalCacheDir().getAbsolutePath(), datepic); //kompletter Pfad, wo Bild gespeichert werden soll
                     OutputStream out = null;
                     //try {
                     out = new FileOutputStream(filename);
@@ -164,6 +165,13 @@ public class Camera_Helper {
         builder.show();
     }
 
+    public static String getPictureIncludedString(ArrayList<String> bilderaufgenommen) {
+        String pictures_included = "";
+        for (String bild_link: bilderaufgenommen) {
+            pictures_included += bild_link + ", ";
+        }
+        return pictures_included.substring(0, pictures_included.length()-2);
+    }
 
 
 }
