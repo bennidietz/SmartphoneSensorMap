@@ -54,6 +54,22 @@
             </fragment>
 
 
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:id="@+id/imageSlider"
+                android:layout_margin="20dp"
+                android:orientation="horizontal"
+                android:layout_height="wrap_content">
+
+
+
+            </LinearLayout>
+            </HorizontalScrollView>
+
+
         </LinearLayout>
     </ScrollView>
 

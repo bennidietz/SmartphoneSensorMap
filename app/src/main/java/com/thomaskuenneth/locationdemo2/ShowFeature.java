@@ -1,17 +1,11 @@
 package com.thomaskuenneth.locationdemo2;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.location.Location;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -46,7 +40,7 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
     private static final int PERMISSIONS_ACCESS_FINE_LOCATION
             = 0x1234;
     Button route;
-    LinearLayout linLayout;
+    LinearLayout linLayout, imageSlider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,13 +53,8 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
+        imageSlider = findViewById(R.id.imageSlider);
         linLayout = findViewById(R.id.linLayout);
-        mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
-        params.height = (getResources().getDisplayMetrics().heightPixels)*35/100;
-        mapFragment.getView().setLayoutParams(params);
-        mapFragment.getMapAsync(this);
         route = findViewById(R.id.route);
         route.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,6 +75,12 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
                             " where " + DBHandler.OVERALL_IDENTIFIER + " = " + identifer);
                     if (records.size() > 0) {
                         feature = records.get(0);
+                        mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                                .findFragmentById(R.id.map);
+                        ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
+                        params.height = (getResources().getDisplayMetrics().heightPixels)*35/100;
+                        mapFragment.getView().setLayoutParams(params);
+                        mapFragment.getMapAsync(this);
                     }
                 }
             }
@@ -93,23 +88,48 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
         if (feature != null) {
             getSupportActionBar().setTitle(feature.get(DBHandler.TABLE1_C1));
             getSupportActionBar().setSubtitle(feature.get(DBHandler.OVERALL_CLASS));
-            File imgFile = new  File(getExternalCacheDir(), feature.get(DBHandler.OVERALL_PICTURE));
 
-            if(imgFile.exists()){
-
-                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-
-                ImageView myImage = new ImageView(this);
-
-                myImage.setImageBitmap(myBitmap);
-
-                linLayout.addView(myImage);
-
+            ArrayList<Bitmap> bilder = getPictures();
+            if (bilder.size() > 0) {
+                int height = getResources().getDisplayMetrics().heightPixels / 4;
+                for (Bitmap bitmap: bilder) {
+                    ImageView imageView = new ImageView(this);
+                    imageView.setPadding(10,0,10,0);
+                    Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, (int)(height/1.33333333333), height, true);
+                    imageView.setImageBitmap(resizedBitmap);
+                    imageSlider.addView(imageView);
+                }
             }
+            int i = 0;
         } else {
             Toast.makeText(context, "Der Datensatz konnte nicht gefunden werden", Toast.LENGTH_LONG);
             this.finish();
         }
+
+    }
+
+    public ArrayList<Bitmap> getPictures() {
+
+        ArrayList<Bitmap> bitmaps = new ArrayList<>();
+
+        if (feature.containsKey(DBHandler.OVERALL_PICTURE) && feature.get(DBHandler.OVERALL_PICTURE) != null) {
+            ArrayList<String> urls = Camera_Helper.getPictureIncludedPaths(feature.get(DBHandler.OVERALL_PICTURE));
+            System.out.println("cjfew " + urls.size());
+            for (String relative_url: urls) {
+                System.out.println("cjfew " + relative_url);
+                File imgFile = new  File(getExternalCacheDir(), relative_url);
+
+                if(imgFile.exists()){
+                    System.out.println("cjfew " + imgFile.getAbsolutePath());
+                    Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+
+                    bitmaps.add(myBitmap);
+
+                }
+            }
+        }
+
+        return bitmaps;
     }
 
 

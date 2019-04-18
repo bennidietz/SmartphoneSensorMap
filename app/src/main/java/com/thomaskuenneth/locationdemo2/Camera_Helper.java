@@ -173,5 +173,20 @@ public class Camera_Helper {
         return pictures_included.substring(0, pictures_included.length()-2);
     }
 
+    public static ArrayList<String> getPictureIncludedPaths(String bilderaufgenommen) {
+        ArrayList<String> relativ_urls = new ArrayList<>();
+
+        if (bilderaufgenommen.contains(",")) {
+            for (String url: bilderaufgenommen.split(",")) {
+                relativ_urls.add(url.replace(" ", ""));
+            }
+        } else if (bilderaufgenommen.length() > 3) {
+            relativ_urls.add(bilderaufgenommen);
+        }
+
+        return relativ_urls;
+
+    }
+
 
 }
