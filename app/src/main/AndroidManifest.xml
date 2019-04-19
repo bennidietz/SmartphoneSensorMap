@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.camera2" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -18,9 +19,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".Wetter"
+            android:label="@string/title_activity_wetter"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
             android:name=".ShowFeature"
             android:label="@string/title_activity_show_feature"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".Hauptmenue"
             android:label="@string/title_activity_hauptmenue"
@@ -49,7 +54,7 @@
 
         <activity
             android:name=".LocationDemo2Activity"
-            android:label="@string/title_activity_location_demo2"></activity>
+            android:label="@string/title_activity_location_demo2" />
     </application>
 
 </manifest>

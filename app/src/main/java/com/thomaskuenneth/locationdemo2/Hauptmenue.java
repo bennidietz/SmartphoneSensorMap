@@ -22,7 +22,7 @@ import android.widget.Toast;
 public class Hauptmenue extends AppCompatActivity {
 
     ImageButton zuKarte;
-    Button addFeature;
+    Button addFeature, weather;
 
     Context context = this;
 
@@ -49,6 +49,14 @@ public class Hauptmenue extends AppCompatActivity {
             public void onClick(View view) {
                 Intent zuKarte = new Intent(context, AddMarker.class);
                 startActivity(zuKarte);
+            }
+        });
+        weather = findViewById(R.id.weather);
+        weather.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent wetter = new Intent(context, Wetter.class);
+                startActivity(wetter);
             }
         });
         if (checkPermission()) {
