@@ -15,12 +15,9 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.ValueCallback;
-import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -34,6 +31,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -184,9 +182,6 @@ public class Wetter extends AppCompatActivity implements OnMapReadyCallback {
         //      BitmapDescriptorFactory.HUE_RED));
         options.icon(BitmapDescriptorFactory.defaultMarker());
 
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-
-        StrictMode.setThreadPolicy(policy);
         System.out.println("iudc " + getWeatherOfLatLng(latLng));
         final String targeturl = "http://api.openweathermap.org/data/2.5/weather?lat=" + latLng.latitude + "&lon=" + latLng.longitude + "&APPID=7f943fcef3f26af302ac9ad6597082c9&units=metric";
 
@@ -207,8 +202,40 @@ public class Wetter extends AppCompatActivity implements OnMapReadyCallback {
             String icon_url = "http://openweathermap.org/img/w/" + icon_id + ".png";
             options.icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(getBitmapFromURL(icon_url),100, 100, false)));
             Address address = latLongToAddress(latLng);
+            System.out.println("iodfchf " + address.toString());
+            System.out.println("iodfchf " + address.getAdminArea());
             if (address != null) {
                 options.title(address.getAddressLine(0).replace(",", ",\n"));
+                System.out.println("iofcdgh " + address.getLocality());
+                System.out.println("iofcdgh " + getPopulationOfCity(address.getLocality(), latLng));
+
+                String cityName = address.getLocality();
+                if (cityName != null) {
+                    if (cityName.contains(" ")) cityName = cityName.substring(0, cityName.indexOf(" ") - 1);
+                    if (cityName.contains("-")) cityName = cityName.substring(0, cityName.indexOf("-") - 1);
+                }
+
+                int stadt_bevölkerung = getPopulationOfCity(cityName, latLng);
+                if (stadt_bevölkerung < 0) {
+                    cityName = address.getAdminArea();
+                    if (cityName != null) {
+                        if (cityName.contains(" ")) cityName = cityName.substring(0, cityName.indexOf(" ") - 1);
+                        if (cityName.contains("-")) cityName = cityName.substring(0, cityName.indexOf("-") - 1);
+                    }
+                    stadt_bevölkerung = getPopulationOfCity(cityName, latLng);
+                }
+                if (stadt_bevölkerung < 0) {
+                    cityName = address.getCountryName();
+                    if (cityName != null) {
+                        if (cityName.contains(" ")) cityName = cityName.substring(0, cityName.indexOf(" ") - 1);
+                        if (cityName.contains("-")) cityName = cityName.substring(0, cityName.indexOf("-") - 1);
+                    }
+                    stadt_bevölkerung = getPopulationOfCity(cityName, latLng);
+                }
+                if (stadt_bevölkerung > 0) {
+                    options.snippet(info + "\n\n" +
+                            "Bevölkerung von " + cityName + ": " + numberToBeautifulString(stadt_bevölkerung));
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -225,22 +252,6 @@ public class Wetter extends AppCompatActivity implements OnMapReadyCallback {
 
         System.out.println("oucxy " + getWeatherOfLatLng(latLng));
         return options;
-    }
-
-    public void javascriptt(LatLng latLng) {
-        WebView browser = new WebView(this);
-        browser.getSettings().setJavaScriptEnabled(true); //Yes you have to do it
-        browser.loadUrl("http://api.openweathermap.org/data/2.5/weather?lat=" + latLng.latitude + "&lon=" + latLng.longitude + "&APPID=7f943fcef3f26af302ac9ad6597082c9"); //If you put the HTML file in asset folder of android
-        browser.evaluateJavascript(
-                "(function() { var xmlHttp = new XMLHttpRequest(); xmlHttp.open( \"GET\", \"https://stackoverflow.com/questions/247483/http-get-request-in-javascript\", false ); xmlHttp.send( null ); return xmlHttp.responseText; })();",
-                new ValueCallback<String>() {
-                    @Override
-                    public void onReceiveValue(String html) {
-                        Log.d("HTML", html);
-                        System.out.println("ioscfuhro" + html);
-                        // code here
-                    }
-                });
     }
 
 
@@ -275,6 +286,8 @@ public class Wetter extends AppCompatActivity implements OnMapReadyCallback {
     }
 
     public static JSONObject getJSONObjectFromURL(String urlString) throws IOException, JSONException {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         HttpURLConnection urlConnection = null;
         URL url = new URL(urlString);
         urlConnection = (HttpURLConnection) url.openConnection();
@@ -327,5 +340,63 @@ public class Wetter extends AppCompatActivity implements OnMapReadyCallback {
         return null;
     }
 
+    public static int getPopulationOfCity(String city_name, LatLng latLng) {
+        String targetUrl = "https://public.opendatasoft.com/api/records/1.0/search/?dataset=worldcitiespop&q=" + city_name + "&sort=population&facet=country";
+        try {
+            JSONObject result = getJSONObjectFromURL(targetUrl);
+            System.out.println("cfsfghdoi " + targetUrl);
+            JSONArray records = result.getJSONArray("records");
+            if (records.length() == 0) {
+                return -1;
+            } else if (records.length() == 1) {
+                return ((JSONObject)records.get(0)).getJSONObject("fields").getInt("population");
+            } else {
+                for (int i= 0; i < records.length(); i++) {
+                    JSONObject fields = ((JSONObject)records.get(i)).getJSONObject("fields");
+                    LatLng latLngResult = new LatLng(fields.getDouble("latitude"), fields.getDouble("longitude"));
+                    System.out.println("cfsfghdoi " + distance(latLngResult, latLng));
+                    if (distance(latLngResult, latLng) < 50000) { // 50 km in der Nähe
+                        return fields.getInt("population");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+
+    public static float distance(LatLng pointA, LatLng pointB) {
+        double lat_a = pointA.latitude;
+        double lng_a = pointA.longitude;
+        double lat_b = pointB.latitude;
+        double lng_b = pointB.longitude;
+        double earthRadius = 3958.75;
+        double latDiff = Math.toRadians(lat_b-lat_a);
+        double lngDiff = Math.toRadians(lng_b-lng_a);
+        double a = Math.sin(latDiff /2) * Math.sin(latDiff /2) +
+                Math.cos(Math.toRadians(lat_a)) * Math.cos(Math.toRadians(lat_b)) *
+                        Math.sin(lngDiff /2) * Math.sin(lngDiff /2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double distance = earthRadius * c;
+
+        int meterConversion = 1609;
+
+        return new Float(distance * meterConversion).floatValue();
+    }
+
+    public String numberToBeautifulString(int number) {
+        String numberString = number + "";
+        if (numberString.length() > 3) {
+            numberString = numberString.substring(0, numberString.length()-3) + "." + numberString.substring(numberString.length()-3);
+        }
+        if (numberString.length() > 7) {
+            numberString = numberString.substring(0, numberString.length()-7) + "." + numberString.substring(numberString.length()-7);
+        }
+        return numberString;
+    }
 
 }
