@@ -3,12 +3,12 @@
 
     <item android:id="@+id/account"
         android:icon="@drawable/welt"
-        android:title="My Account"/>
+        android:title="Satellit"/>
     <item android:id="@+id/settings"
         android:icon="@drawable/mobile_phone"
-        android:title="Settings"/>
+        android:title="Terrain"/>
     <item android:id="@+id/mycart"
         android:icon="@drawable/common_google_signin_btn_text_dark"
-        android:title="My Cart"/>
+        android:title="Indoor"/>
 
 </menu>

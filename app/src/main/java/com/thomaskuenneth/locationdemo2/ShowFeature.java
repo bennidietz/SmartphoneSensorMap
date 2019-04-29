@@ -8,12 +8,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -25,6 +27,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,13 +39,15 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
 
     DBHandler dbHandler;
     Context context = this;
-    Map<String, String> feature = null;
     private GoogleMap mMap;
     SupportMapFragment mapFragment;
     private static final int PERMISSIONS_ACCESS_FINE_LOCATION
             = 0x1234;
     Button route;
     LinearLayout linLayout, imageSlider;
+    TextView beschreibung;
+
+    static JSONObject jsonObject = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,42 +60,45 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
+        beschreibung = findViewById(R.id.beschreibung);
         imageSlider = findViewById(R.id.imageSlider);
         linLayout = findViewById(R.id.linLayout);
         route = findViewById(R.id.route);
         route.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                LatLng latLng = getLatLng();
                 Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
-                        Uri.parse("google.navigation:q=" + feature.get(DBHandler.OVERALL_LATITUDE) + "," +
-                                feature.get(DBHandler.OVERALL_LONGITUDE)));
+                        Uri.parse("google.navigation:q=" + latLng.latitude + "," +
+                                latLng.longitude));
                 startActivity(intent);
             }
         });
-        if (savedInstanceState == null) {
-            Bundle extras = getIntent().getExtras();
-            if (extras == null) {
-            } else {
-                if (extras.containsKey(DBHandler.OVERALL_IDENTIFIER)) {
-                    String identifer = extras.getString(DBHandler.OVERALL_IDENTIFIER);
-                    ArrayList<Map<String, String>> records = dbHandler.executeSQLToDict(context, DBHandler.table1_keys, "select * from " + DBHandler.table1_keys[0] +
-                            " where " + DBHandler.OVERALL_IDENTIFIER + " = " + identifer);
-                    if (records.size() > 0) {
-                        feature = records.get(0);
-                        mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                                .findFragmentById(R.id.map);
-                        ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
-                        params.height = (getResources().getDisplayMetrics().heightPixels)*35/100;
-                        mapFragment.getView().setLayoutParams(params);
-                        mapFragment.getMapAsync(this);
-                    }
-                }
-            }
-        }
-        if (feature != null) {
-            getSupportActionBar().setTitle(feature.get(DBHandler.TABLE1_C1));
-            getSupportActionBar().setSubtitle(feature.get(DBHandler.OVERALL_CLASS));
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        ViewGroup.LayoutParams params = mapFragment.getView().getLayoutParams();
+        params.height = (getResources().getDisplayMetrics().heightPixels)*35/100;
+        mapFragment.getView().setLayoutParams(params);
+        mapFragment.getMapAsync(this);
 
+        getSupportActionBar().setTitle(getName());
+        getSupportActionBar().setSubtitle(getKategorie());
+
+        if (!getBeschreibung().isEmpty()) {
+            beschreibung.setText(getBeschreibung());
+        }
+
+        if (!getBildUrl().isEmpty()) {
+            int height = getResources().getDisplayMetrics().heightPixels / 4;
+            ImageView imageView = new ImageView(this);
+            imageView.setPadding(10,0,10,0);
+            Picasso.with(this)
+                    .load(getBildUrl())
+                    .into(imageView);
+            imageSlider.addView(imageView);
+        }
+
+/*
             ArrayList<Bitmap> bilder = getPictures();
             if (bilder.size() > 0) {
                 int height = getResources().getDisplayMetrics().heightPixels / 4;
@@ -101,35 +111,8 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
             int i = 0;
-        } else {
-            Toast.makeText(context, "Der Datensatz konnte nicht gefunden werden", Toast.LENGTH_LONG);
-            this.finish();
-        }
+        System.out.println("oucg " + jsonObject.toString());*/
 
-    }
-
-    public ArrayList<Bitmap> getPictures() {
-
-        ArrayList<Bitmap> bitmaps = new ArrayList<>();
-
-        if (feature.containsKey(DBHandler.OVERALL_PICTURE) && feature.get(DBHandler.OVERALL_PICTURE) != null) {
-            ArrayList<String> urls = Camera_Helper.getPictureIncludedPaths(feature.get(DBHandler.OVERALL_PICTURE));
-            System.out.println("cjfew " + urls.size());
-            for (String relative_url: urls) {
-                System.out.println("cjfew " + relative_url);
-                File imgFile = new  File(getExternalCacheDir(), relative_url);
-
-                if(imgFile.exists()){
-                    System.out.println("cjfew " + imgFile.getAbsolutePath());
-                    Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-
-                    bitmaps.add(myBitmap);
-
-                }
-            }
-        }
-
-        return bitmaps;
     }
 
 
@@ -157,7 +140,8 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LatLng latLng = new LatLng(Double.parseDouble(feature.get(DBHandler.OVERALL_LATITUDE)), Double.parseDouble(feature.get(DBHandler.OVERALL_LONGITUDE)));
+        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        LatLng latLng = getLatLng();
         addMarkerToMap(latLng);
 
     }
@@ -165,7 +149,7 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
 
     public void addMarkerToMap(LatLng latLng) {
         MarkerOptions options = new MarkerOptions();
-        options.position(latLng).title(feature.get(DBHandler.TABLE1_C1));
+        options.position(latLng).title(getName());
         mMap.getUiSettings().setZoomControlsEnabled(true); // Kontrollelemente für Benutzer anzegien
         mMap.getUiSettings().setCompassEnabled(true); // zeige den Kompass an (wenn Karte gedreht)
         mMap.getUiSettings().setMapToolbarEnabled(true); // kontextabhängige Werkzeugleiste -> ImageButtons zu Google Maps (+ schnelle Route)
@@ -175,5 +159,29 @@ public class ShowFeature extends AppCompatActivity implements OnMapReadyCallback
         Marker marker = mMap.addMarker(options);
         CameraUpdate cu3 = CameraUpdateFactory.newLatLngZoom(options.getPosition(), 17);
         mMap.moveCamera(cu3);
+    }
+
+    public static LatLng getLatLng() {
+        return LocationDemo2Activity.decodeCoordinates(getProperty("Koordinaten"));
+    }
+
+    public static String getName() {
+        return getProperty("Name");
+    }
+
+    public static String getBeschreibung() {
+        return getProperty("Beschreibung");
+    }
+
+    public static String getKategorie() {
+        return getProperty("Kategorie");
+    }
+
+    public static String getBildUrl() {
+        return getProperty("Bilder");
+    }
+
+    public static String getProperty(String property) {
+        return LocationDemo2Activity.getSafeProperty(jsonObject, property);
     }
 }

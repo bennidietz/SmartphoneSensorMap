@@ -53,6 +53,13 @@
 
             </fragment>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_margin="20dp"
+                android:textColor="@color/white"
+                android:id="@+id/beschreibung"
+                android:layout_height="wrap_content" />
+
 
             <HorizontalScrollView
                 android:layout_width="match_parent"

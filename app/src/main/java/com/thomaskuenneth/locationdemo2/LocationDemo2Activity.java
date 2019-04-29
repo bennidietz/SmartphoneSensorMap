@@ -11,6 +11,7 @@ import android.location.LocationManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +19,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -31,6 +34,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,9 +54,12 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
 
     Context context = this;
     DBHandler dbHandler;
-    HashMap<Marker, String> markers;
+    HashMap<Marker, JSONObject> markers;
     Button gotoFeature;
-    String currentidentifier = "";
+    JSONObject currentidentifier = null;
+
+    CheckBox verkehr;
+    CheckBox satellit;
 
     // navigation bars
     private DrawerLayout dl;
@@ -55,6 +68,7 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
 
     Button aktualisieren;
     ArrayList<StateVO> kategorienChecked;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,9 +83,9 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         gotoFeature.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent gotoFeature = new Intent(context, ShowFeature.class);
-                gotoFeature.putExtra(DBHandler.OVERALL_IDENTIFIER, currentidentifier);
-                startActivity(gotoFeature);
+                Intent showFeature = new Intent(context, ShowFeature.class);
+                ShowFeature.jsonObject = currentidentifier;
+                startActivity(showFeature);
             }
         });
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -79,7 +93,36 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         //params.height = (getResources().getDisplayMetrics().heightPixels)*8/10;
         //mapFragment.getView().setLayoutParams(params);
         mapFragment.getMapAsync(this);
-
+        verkehr = findViewById(R.id.verkehr);
+        verkehr.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    mMap.setTrafficEnabled(true);
+                } else {
+                    mMap.setTrafficEnabled(false);
+                }
+            }
+        });
+        satellit = findViewById(R.id.satellite);
+        satellit.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                    satellit.setButtonTintList(ContextCompat.getColorStateList(context, R.color.gelb));
+                    satellit.setTextColor(getColor(R.color.gelb));
+                    verkehr.setButtonTintList(ContextCompat.getColorStateList(context, R.color.gelb));
+                    verkehr.setTextColor(getColor(R.color.gelb));
+                } else {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                    satellit.setButtonTintList(ContextCompat.getColorStateList(context, R.color.blau));
+                    satellit.setTextColor(getColor(R.color.blau));
+                    verkehr.setButtonTintList(ContextCompat.getColorStateList(context, R.color.blau));
+                    verkehr.setTextColor(getColor(R.color.blau));
+                }
+            }
+        });
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -98,10 +141,14 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
                 switch(id)
                 {
                     case R.id.account:
+                        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
                         Toast.makeText(context, "My Account",Toast.LENGTH_SHORT).show();
                     case R.id.settings:
+                        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
                         Toast.makeText(context, "Settings",Toast.LENGTH_SHORT).show();
                     case R.id.mycart:
+                        mMap.setIndoorEnabled(true);
+                        mMap.setTrafficEnabled(true);
                         Toast.makeText(context, "My Cart",Toast.LENGTH_SHORT).show();
                     default:
                         return true;
@@ -127,7 +174,7 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
             @Override
             public void onClick(View view) {
                 ArrayList<Marker> markerstoremove = new ArrayList<>();
-                HashMap<Marker, String> markerstoadd = new HashMap<>();
+                HashMap<Marker, JSONObject> markerstoadd = new HashMap<>();
                 for (Marker marker: markers.keySet()) {
                     marker.remove();
                     for (StateVO kategorie: kategorienChecked) {
@@ -137,7 +184,7 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
                             //options.icon(BitmapDescriptorFactory.defaultMarker(
                             //      BitmapDescriptorFactory.HUE_RED));
                             options.icon(BitmapDescriptorFactory.defaultMarker(getColorForClass(marker.getSnippet())));
-                            String identifier = markers.get(marker);
+                            JSONObject identifier = markers.get(marker);
                             markerstoremove.add(marker);
                             //markers.remove(marker);
                             markerstoadd.put(mMap.addMarker(options), identifier);
@@ -192,7 +239,9 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
-
+        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        mMap.setIndoorEnabled(true);
+        //mMap.setTrafficEnabled(true);
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
@@ -200,18 +249,11 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                double latitude = marker.getPosition().latitude;
-                double longitude = marker.getPosition().longitude;
                 for (Marker marker1: markers.keySet()) {
                     if (marker1.equals(marker)) {
-                        ArrayList<Map<String, String>> records = dbHandler.executeSQLToDict(context, DBHandler.table1_keys, "select * from " + DBHandler.table1_keys[0] +
-                                " where " + DBHandler.OVERALL_IDENTIFIER + " = " + markers.get(marker1));
-                        if (records.size() > 0) {
-                            //Toast.makeText(context, records.get(0).get(DBHandler.OVERALL_CLASS), Toast.LENGTH_LONG).show();
-                            gotoFeature.setVisibility(View.VISIBLE);
-                            gotoFeature.setText(records.get(0).get(DBHandler.TABLE1_C1) + " anzeigen ->");
-                            currentidentifier = markers.get(marker1);
-                        }
+                        gotoFeature.setVisibility(View.VISIBLE);
+                        currentidentifier = markers.get(marker1);
+                        gotoFeature.setText(getSafeProperty(currentidentifier, "Name") + " anzeigen ->");
                     }
                 }
                 return false;
@@ -233,9 +275,11 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         } else {
             markerDemo();
         }
-        addAllMarker();
+        //addAllMarker();
+        addMarkerFromGoogleSheets();
 
     }
+
 
     private void markerDemo() throws SecurityException {
         MarkerOptions options = new MarkerOptions();
@@ -267,14 +311,59 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         }
     }
 
-    public void addAllMarker() {
-        ArrayList<Map<String, String>> allrecords = dbHandler.executeSQLToDict(context, DBHandler.table1_keys, "select * from " + DBHandler.table1_keys[0] + " where " + DBHandler.OVERALL_LATITUDE  +
-                " is not null and " + DBHandler.OVERALL_LONGITUDE + " is not null");
-        for (Map<String, String> marker: allrecords) {
-            LatLng latLng = new LatLng(Double.parseDouble(marker.get(DBHandler.OVERALL_LATITUDE)), Double.parseDouble(marker.get(DBHandler.OVERALL_LONGITUDE)));
-            addMarker(getMarkerOptionsFromLatLng(latLng, marker.get(DBHandler.TABLE1_C1), marker.get(DBHandler.OVERALL_CLASS)), marker.get(DBHandler.OVERALL_IDENTIFIER));
+    private void addMarkerFromGoogleSheets() {
+        String url = "https://script.googleusercontent.com/macros/echo?user_content_key=BLdlerX3HiG9IEkTXb3FvviFUhsuY-lgoapxXv7QD6bLPjNpnG2mNrC68qomxQ6gOgO4-uWcFKspdMLyEv7zfg5gKUrfRPAEOJmA1Yb3SEsKFZqtv3DaNYcMrmhZHmUMWojr9NvTBuBLhyHCd5hHa1GhPSVukpSQTydEwAEXFXgt_wltjJcH3XHUaaPC1fv5o9XyvOto09QuWI89K6KjOu0SP2F-BdwUjuvBaj8HFII3A9hjDsF1qONghHQbkTx2aqgQmKiPht7UeAqicXBN8fIuKZ-5fiJXTsHi7XeTbZLcFdVIoNMa9A&lib=MnrE7b2I2PjfH799VodkCPiQjIVyBAxva";
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = Wetter.getJSONObjectFromURL(url);
+            System.out.println(jsonObject.toString());
+            JSONArray jsonArray = jsonObject.getJSONArray("Lokale");
+            System.out.println("iuc " + jsonArray.length());
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject element = jsonArray.getJSONObject(i);
+                String name = getSafeProperty(element, "Name");
+                String beschreibung = getSafeProperty(element, "Beschreibung");
+                String kategorie = getSafeProperty(element, "Kategorie");
+                String koordinaten = getSafeProperty(element, "Koordinaten");
+                String bilder = getSafeProperty(element, "Bilder");
+                System.out.println("iuc " + name);
+                LatLng latLng = decodeCoordinates(koordinaten);
+                if (latLng == null) {
+                    break;
+                }
+                addMarker(getMarkerOptionsFromLatLng(latLng,name,kategorie), element);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println(getUserReadableError(e));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            System.out.println(getUserReadableError(e));
         }
     }
+
+    public static LatLng decodeCoordinates(String savedCoordinates) {
+        if (savedCoordinates.contains(",") && savedCoordinates.split(",").length > 1) {
+            String[] coors = savedCoordinates.split(",");
+            Double longitude = Double.parseDouble(coors[0].replace(" ", ""));
+            Double latitidue = Double.parseDouble(coors[1].replace(" ", ""));
+            LatLng latLng = new LatLng(longitude, latitidue);
+            return latLng;
+        }
+        return null;
+    }
+
+    public static String getSafeProperty(JSONObject jsonObject, String property) {
+        if (jsonObject.has(property)) {
+            try {
+                return jsonObject.getString(property);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return "";
+    }
+
 
     public MarkerOptions getMarkerOptionsFromLatLng(LatLng latLng, String name, String klasse) {
         MarkerOptions options = new MarkerOptions();
@@ -305,7 +394,7 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         }
     }
 
-    public void addMarker(MarkerOptions newMarkerOptions, String identifier) {
+    public void addMarker(MarkerOptions newMarkerOptions, JSONObject identifier) {
         Marker marker = mMap.addMarker(newMarkerOptions);
         markers.put(marker, identifier);
     }
@@ -316,6 +405,12 @@ public class LocationDemo2Activity extends AppCompatActivity implements OnMapRea
         Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), drawable_id);
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
         return resizedBitmap;
+    }
+
+    public static String getUserReadableError(Exception e) {
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        return errors.toString();
     }
 
 
